@@ -1,0 +1,60 @@
+"""Streamlit UI для генерации и валидации."""
+import streamlit as st
+import json
+import pandas as pd
+from src.schemas import IntentSample
+from src.validator import DataValidator
+from src.deduplicator import deduplicate
+from src.trainer import train_and_eval
+from sklearn.model_selection import train_test_split
+
+
+st.set_page_config(page_title="Synthetic Data Factory", layout="wide")
+st.title("Synthetic Data Factory")
+
+tab1, tab2, tab3 = st.tabs(["📊 Validate", "🔍 Deduplicate", "🎯 Train"])
+
+with tab1:
+    st.subheader("Validation Report")
+    file = st.file_uploader("Upload JSONL", type="jsonl")
+    if file:
+        samples = [IntentSample.model_validate_json(line) for line in file]
+        v = DataValidator(samples)
+        report = v.report()
+        st.json(report)
+
+        st.metric("Samples", report["n_samples"])
+        st.metric("Diversity", report["diversity_score"])
+        st.metric("Duplicate rate", report["duplicate_rate"])
+
+        st.subheader("Class Balance")
+        st.bar_chart(report["class_balance"])
+
+with tab2:
+    st.subheader("Near-Duplicate Removal")
+    file = st.file_uploader("Upload JSONL", type="jsonl", key="dedup")
+    threshold = st.slider("Similarity threshold", 0.5, 0.95, 0.8)
+    if file and st.button("Deduplicate"):
+        samples = [IntentSample.model_validate_json(line) for line in file]
+        cleaned = deduplicate(samples, threshold=threshold)
+        st.success(f"Removed {len(samples) - len(cleaned)} duplicates ({len(cleaned)} left)")
+        st.download_button(
+            "Download cleaned JSONL",
+            data="\n".join(s.model_dump_json() for s in cleaned),
+            file_name="cleaned.jsonl",
+        )
+
+with tab3:
+    st.subheader("Train Downstream Model")
+    file = st.file_uploader("Upload JSONL", type="jsonl", key="train")
+    test_size = st.slider("Test size", 0.1, 0.4, 0.2)
+    if file and st.button("Train"):
+        samples = [IntentSample.model_validate_json(line) for line in file]
+        train, test = train_test_split(
+            samples, test_size=test_size, random_state=42,
+            stratify=[s.intent for s in samples],
+        )
+        results = train_and_eval(train, test)
+        st.metric("Accuracy", results["accuracy"])
+        st.metric("F1 macro", results["f1_macro"])
+        st.text(results["report"])
