@@ -1,0 +1,47 @@
+generation:
+  model: gpt-4o-mini
+  temperature: 0.9
+  output: data/synthetic.jsonl
+  specs:
+    - intent: greet
+      language: ru
+      n: 100
+      examples:
+        - "привет"
+        - "здравствуйте"
+    - intent: order
+      language: ru
+      n: 200
+      examples:
+        - "хочу заказать пиццу"
+    - intent: cancel
+      language: ru
+      n: 100
+      examples:
+        - "отмените заказ"
+    - intent: ask_price
+      language: ru
+      n: 100
+      examples:
+        - "сколько стоит"
+    - intent: goodbye
+      language: ru
+      n: 100
+      examples:
+        - "до свидания"
+    - intent: other
+      language: ru
+      n: 100
+      examples:
+        - "как дела"
+
+validation:
+  min_diversity: 0.4
+  max_duplicate_rate: 0.05
+
+deduplication:
+  threshold: 0.8
+
+training:
+  test_split: 0.2
+  seed: 42
