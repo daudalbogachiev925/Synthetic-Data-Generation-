@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# Data (кроме .gitkeep)
+data/*
+!data/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Models
+*.pt
+*.bin
+*.safetensors
+*.onnx
+checkpoints/
+
+# Env
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
